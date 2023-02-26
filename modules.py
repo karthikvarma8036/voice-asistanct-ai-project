@@ -1,0 +1,489 @@
+# importing the libraries
+import os
+import subprocess
+from PIL import Image
+import wikipedia
+import pywhatkit
+import pyttsx3
+import webbrowser
+import requests
+import psutil
+import datetime
+import random
+import time
+import speech_recognition as sr
+from nltk.sentiment import SentimentIntensityAnalyzer
+from tkinter import Tk     # from tkinter import Tk for Python 3.x
+import PyPDF2
+from tkinter.filedialog import askopenfilename
+
+
+# setting the engine properties like voice and volume
+engine = pyttsx3.init()
+voices = engine.getProperty('voices')
+engine.setProperty('voice', voices[1].id)
+
+# read file
+
+
+def read_pdf_file():
+    '''
+
+    This function reads a pdf file to the user.
+
+    '''
+    Tk().withdraw()
+
+    filename = askopenfilename()
+    print(filename)
+    sia = SentimentIntensityAnalyzer()
+
+    def say_something():
+        if dict.get('pos') > dict.get('neg') and dict.get('pos') > dict.get('neu'):
+            engine = pyttsx3.init(driverName="sapi5")
+            voices = engine.getProperty('voices')
+            volume = engine.getProperty('volume')
+            engine.setProperty('voice', voices[1].id)
+            engine.setProperty("rate", 170)  # changing the rate of the voice
+            engine.setProperty('volume', volume-0.001)
+            print("positive")
+            engine.say(dor1)
+            engine.runAndWait()
+        elif dict.get('neu') > dict.get('neg') and dict.get('neu') > dict.get('pos'):
+            engine = pyttsx3.init(driverName="sapi5")
+            voices = engine.getProperty('voices')
+            volume = engine.getProperty('volume')
+            engine.setProperty('voice', voices[1].id)
+            engine.setProperty("rate", 160)  # changing the rate of the voice
+            engine.setProperty('volume', volume-0.001)
+            print("neutral")
+            engine.say(dor3)
+            engine.runAndWait()
+        else:
+            engine = pyttsx3.init(driverName="sapi5")
+            voices = engine.getProperty('voices')
+            volume = engine.getProperty('volume')
+            engine.setProperty('voice', voices[1].id)  # changing the voice
+            engine.setProperty("rate", 150)  # changing the rate of the voice
+            engine.setProperty('volume', volume-0.001)
+            engine.say(
+                dor2)
+            engine.runAndWait()
+
+    pdf_file = open(filename, 'rb')
+    read_pdf = PyPDF2.PdfFileReader(pdf_file, strict=False)
+    # Find the number of pages in the PDF document
+    number_of_pages = read_pdf.getNumPages()
+    print(number_of_pages)
+    # Read from page 20 to the end of the PDF document
+    for i in range(20, number_of_pages):
+        # Read the PDF page
+        page = read_pdf.getPage(i)
+        # Extract the text of the PDF page
+        page_content = page.extractText()
+        dict = sia.polarity_scores(page_content)
+        dor1 = '<pitch absmiddle="10">'+page_content+'</pitch>'
+        dor2 = '<pitch absmiddle="4">'+page_content+'</pitch>'
+        dor3 = '<pitch absmiddle="6">'+page_content+'</pitch>'
+        print(dict)
+        say_something()
+
+
+# to do list
+
+
+def take_notes():
+    r5 = sr.Recognizer()
+    with sr.Microphone() as source:
+        print('What is your "TO DO LIST" for today')
+        engine.say('What is your "TO DO LIST" for today')
+        engine.runAndWait()
+        audio = r5.listen(source)
+        audio = r5.recognize_google(audio)
+        print(audio)
+       # today = date.today()
+       # today = str(today)
+        with open("kavi.txt", "a") as f:
+            # f.write('\n')
+            # f.write(today)
+            f.write('\n')
+            f.write(audio)
+            f.write('\n')
+            f.write(audio)
+            f.write('\n')
+            f.write(audio)
+            f.write('\n')
+            f.write(audio)
+            f.write('\n')
+            f.write('......')
+            f.write('\n')
+            f.close()
+        engine.say('Notes Taken')
+        engine.runAndWait()
+
+
+def show_notes():
+    with open("kavi.txt", "r") as f:
+        task = f.read()
+        task = task.split('......')
+    engine.say(task[-2])
+    engine.runAndWait()
+
+# main talk function, that will be used to provide voice output to the user
+
+
+def talk(text=None, ques=None):
+    '''
+
+    This function will give voice output to the user(Fun QnA with Kavi).
+
+    '''
+
+    if text == None:
+        # simple talk responses (input => ques)
+        if(ques != None):
+            # talk to kavi like a buddy :)
+            if 'are you single' in ques:
+                engine.say('I am in relationship with wireless devices')
+            elif 'do you like me' in ques:
+                engine.say('yes boss definitely')
+            elif 'what is your name' in ques:
+                engine.say('My devloper karunakran has named me kkavi')
+            elif 'cringe' in ques:
+                engine.say('alright........he/she was funniest person')
+            elif 'joke' in ques:
+                joke = get_joke()
+                print(joke)
+
+                engine.say(joke)
+
+                engine.say(joke)
+
+            elif 'i am tired' in ques:
+                engine.say('you should take a break')
+            elif 'favorite game' in ques:
+                engine.say('my favorite game is chess')
+            elif 'can you dance' in ques:
+                engine.say(
+                    'I cant dance as of now, but I can play some dance music')
+            elif 'how do i look' in ques:
+                engine.say('juding from your voice, amazing')
+            elif 'can you cook' in ques:
+                engine.say(
+                    'i can cook you up amazing bedtime stories if you want')
+            elif 'who is your friend' in ques:
+                engine.say(
+                    'her name is nilla voice assistant, she is in another repository')
+            else:
+                engine.say("Sorry, couldn't get you :( ")
+
+    else:
+        # vocalize text output
+        engine.say(text)
+    engine.runAndWait()
+    return False
+
+
+# for displaying images, given resolution(type) or name(ctx)
+def image(type, ctx=None):
+    '''
+    This function extracts image to usuable format and displays them. 
+    '''
+    if (type > 5 or type <= 0):
+        return True
+    elif type == 5:
+        ctx.replace("comma", ',')
+        txt = '?'+ctx
+    else:
+        # type 0-4 have default resolutions to choose from
+        list1 = ['1280x720', '1920x1080', '2048x1080', '5096x2160']
+        txt = list1[type-1]
+
+    # display image
+    response = requests.get(
+        "https://source.unsplash.com/random/{0}".format(txt))
+    file = open('container.jpg', 'wb')
+    file.write(response.content)
+    img = Image.open(r"container.jpg")
+    img.show()
+    file.close
+    return False
+
+
+# plays the song(default browser)
+def play(song, genre=None, artist=None, lyrist=None):
+    '''
+
+    This functions plays songs/playlist on user commands.
+
+    '''
+
+    if song == "random":
+        # code for getting genre/artist/lyrist etc
+        # and generating a random playlist.
+        # ask if user would like a song or on loop(playlist).
+        pass
+    # playing via song name
+    else:
+        talk("playing your requested song "+song+", please wait!")
+        print("playing", song)
+        pywhatkit.playonyt(song)
+    return False
+
+
+# look up information on wikipedia / gain knowledge
+def info(text, search=False, summary=False, line=5, wordCount=20):
+    ''' 
+
+    This functions looks information on wikipedia on user commands.
+
+    '''
+
+    if(search):
+        information = wikipedia.search(text, wordCount)
+    # to look for any information/person/history/reviews etc (summary)
+    elif(summary):
+        information = wikipedia.summary(text, line)
+    print(information)
+    talk(information)
+    return False
+
+
+def whatsapp(no="+91 93611 40968"):
+    '''
+
+    This function texts whatsapp messages.
+
+    '''
+    pywhatkit.sendwhatmsg(
+        no, "hello iam kavi,my boss has told me to text any important info", 13, 58)
+    print("Successfully Sent!")
+    return False
+
+
+# look for 'place' on google maps
+def locate(place):
+    '''
+
+    This function looks for places on google maps.
+
+    '''
+
+    talk("user asked to locate "+place)
+    webbrowser.open("https://www.google.nl/maps/place/" + place + "")
+    return False
+
+
+# opens files/editors (currently supported : notepad and calculator)
+def open(file):
+    '''
+
+    This functions opens files/editors.
+
+    '''
+
+    if file == 'calculator':
+        subprocess.call("calc.exe")
+    else:
+        try:
+            link = str(file).upper()+".EXE"
+            os.startfile(link)
+        except:
+            talk("could not open the file {file}")
+    return False
+
+
+# get the weather condition (temperature & humidity) of a 'location'
+def weather(location):
+    '''
+
+    This function shows the weather information.
+
+    '''
+
+    api_key = "51d5d78391e312e72cde67174f38e770"
+    base_url = "https://api.openweathermap.org/data/2.5/weather?"
+    complete_url = base_url + "appid=" + api_key + "&q=" + location
+    result = requests.get(complete_url)
+    x = result.json()
+
+    # relaying the output to user
+    if x["cod"] != "404":
+        weather = x["main"]
+        talk("Temperature of " + str(location) + " in kelvin unit is " +
+             str(weather['temp']) +
+             "\n humidity in percentage is " +
+             str(weather['humidity']) +
+             "\n description  " +
+             str(x['weather'][0]['description']))
+
+        print(str(location) + " Temperature in kelvin unit = " +
+              str(weather['temp']) +
+              "\n humidity (in percentage) = " +
+              str(weather['humidity']) +
+              "\n description = " +
+              str(x['weather'][0]['description']))
+    else:
+        talk("Sorry, there was some error. Please try again later or look for the weather of a different location")
+        print("Sorry, there was some error. Please try again later or look for the weather of a different location")
+    return False
+
+
+def health(ctx):
+    '''
+
+    This function shows details of memory consumption of voice assistant.
+
+    '''
+
+    pid = os.getpid()
+    py = psutil.Process(pid)
+    memory_use = py.memory_info()[0] / 2. ** 30
+    talk("I use {0:.2f} GB..".format(memory_use))
+    return False
+
+
+def IP(ctx):
+    '''
+
+    This function provides IP Address of the user.
+
+    '''
+
+    ip_address = requests.get('https://api64.ipify.org?format=json').json()
+    ip = ip_address
+    print(f'Your ip address is :- {ip["ip"]}')
+    talk(f'Your ip address is :- {ip["ip"]}')
+    return False
+
+
+def wishMe():
+    '''
+
+    wishes the user according to time.
+
+    '''
+
+    hour = int(datetime.datetime.now().hour)
+    if hour >= 0 and hour < 12:
+        talk("Good Morning!")
+
+    elif hour >= 12 and hour < 18:
+        talk("Good Afternoon!")
+
+    else:
+        talk("Good Evening!")
+    return
+
+
+# coin flipping game
+def flip_a_coin(ctx):
+    '''
+
+    This function generates random coin side.
+
+    '''
+
+    mapping = {0: 'head', 1: "tail"}
+    key = random.randint(0, 1)
+    talk(f"It's a {mapping[key]} pal!")
+    print(f"It's a {mapping[key]} pal!")
+    return False
+
+
+def lucky_no(ctx):
+    '''
+
+    Generates any random number between 1 to 10.
+
+    '''
+    num = random.randint(1, 10)
+    print(f"{num} is your lucky number.")
+    talk(f"{num} is your lucky number.")
+    return False
+
+
+# volume control
+def volume_increaser(ctx):
+    '''
+
+    increases volume
+
+    '''
+    import pyautogui
+    pyautogui.press('volumeup')
+    return False
+
+
+def volume_decreaser(ctx):
+    '''
+
+    decreases volume
+
+    '''
+    import pyautogui
+    pyautogui.press('volumedown')
+    return False
+
+
+def volume_mute(ctx):
+    '''
+
+    mutes on command
+
+    '''
+    import pyautogui
+    pyautogui.press('volumemute')
+    return False
+
+
+# battery status
+def battery_status(ctx):
+    '''
+
+    shows battery status details
+
+    '''
+
+    battery = psutil.sensors_battery()
+    percentage = battery.percent
+    talk(f"we have {str(percentage)} percent of battery left")
+    print(f"we have {percentage} percent of battery left")
+    return False
+
+
+# Fetches jokes
+def get_joke():
+    '''
+
+    This function tells jokes to user.
+
+    '''
+
+    url = 'https://v2.jokeapi.dev/joke/Any'
+    response = requests.get(url)
+    jokes = response.json()
+    joke = 'The funniest thing about APIs is that they never work on time.'
+    if jokes['error'] == False:
+        if jokes['type'] == 'single':
+            joke = jokes['joke'].replace('\"', '')
+        else:
+            joke = jokes['setup'].replace(
+                '\"', '') + '\n' + jokes['delivery'].replace('\"', '')
+    return joke
+
+
+def intro():
+    '''
+
+    This function introduces Kavi to users.
+
+
+    '''
+
+    print('Hi, this is your voice assistant Kavi')
+    talk('Hi, this is your voice assistant Kavi.')
+    print('What can i do for you?')
+    talk('What can i do for you buddy?')
+    talk("")
+    return
